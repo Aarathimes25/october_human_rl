@@ -1,0 +1,18 @@
+{
+  "scenario": "1o_1ai_1h",
+  "total_steps": 400000,
+  "seed": 42,
+  "minutes": 31.1,
+  "comparison": {
+    "ppo": {
+      "ces": 0.7085387789881343,
+      "solve_rate": 1.0,
+      "steps": 19.63
+    },
+    "greedy": {
+      "ces": 0.707878185509694,
+      "solve_rate": 1.0,
+      "steps": 20.02
+    }
+  }
+}

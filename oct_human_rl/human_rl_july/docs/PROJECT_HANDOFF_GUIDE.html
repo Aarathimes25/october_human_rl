@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DTS ZSC Project Handoff and Technical Guide</title>
+<style>
+  :root {
+    --ink: #172a33;
+    --muted: #5e6f77;
+    --line: #d8e0e2;
+    --paper: #ffffff;
+    --soft: #f2f6f6;
+    --brand: #24766f;
+    --brand-dark: #17343c;
+    --green: #4b7947;
+    --amber: #a86125;
+    --red: #a94444;
+    --blue: #3b5b92;
+  }
+
+  * { box-sizing: border-box; }
+  html { background: #dfe6e7; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--paper);
+    font: 10.2pt/1.48 "Segoe UI", Arial, sans-serif;
+  }
+
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  @media print {
+    html, body { background: white; }
+    .page {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0 0 11mm;
+      box-shadow: none;
+      overflow: visible;
+    }
+    .cover { min-height: 267mm; padding: 0; }
+    .cover-inner { min-height: 267mm; padding: 18mm 12mm; }
+    .folio { left: 0; right: 0; bottom: 0; }
+    body { font-size: 8.7pt; line-height: 1.30; }
+    h2 { font-size: 19pt; margin-bottom: 3.5mm; }
+    h3 { font-size: 11.3pt; margin: 3.4mm 0 1.5mm; }
+    h4 { font-size: 9.3pt; margin: 2.5mm 0 .8mm; }
+    p { margin-bottom: 1.8mm; }
+    .lead { font-size: 10.2pt; line-height: 1.38; margin-bottom: 3.3mm; }
+    ul, ol { margin-top: 1.5mm; margin-bottom: 2.5mm; }
+    li { margin: .8mm 0; }
+    .cards { gap: 2.2mm; margin: 2.5mm 0; }
+    .card { padding: 2.6mm; }
+    .callout { margin: 2.5mm 0; padding: 2.6mm 3.5mm; }
+    table { margin: 1.7mm 0 3mm; font-size: 7.6pt; }
+    th, td { padding: 1.4mm 1.8mm; }
+    .flow { margin: 3mm 0; gap: 2mm; }
+    .flow-box { min-height: 25mm; padding: 2.6mm; }
+    .pipeline { margin: 3mm 0; gap: 1.5mm 3mm; }
+    .step-copy { padding-bottom: 2mm; }
+    .dag { margin: 4mm auto; }
+    .priority-list li { padding-top: 1.8mm; padding-bottom: 1.8mm; margin: 1mm 0; }
+    pre { margin: 1.8mm 0 2.5mm; padding: 2.7mm; font-size: 7.6pt; }
+    .page.dense { font-size: 8.1pt; line-height: 1.22; }
+    .page.dense h3 { margin: 2.5mm 0 1.1mm; }
+    .page.dense table { margin: 1.2mm 0 2mm; font-size: 7.1pt; }
+    .page.dense th, .page.dense td { padding: 1.1mm 1.5mm; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 8mm auto;
+    padding: 14mm 14mm 16mm;
+    background: white;
+    box-shadow: 0 8px 32px rgba(23, 42, 51, .12);
+    position: relative;
+    page-break-after: always;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .cover {
+    padding: 0;
+    background:
+      radial-gradient(circle at 87% 12%, rgba(87, 183, 171, .23), transparent 28%),
+      linear-gradient(145deg, #12262f 0%, #193943 67%, #1f635f 100%);
+    color: white;
+  }
+  .cover-inner { padding: 24mm 18mm; min-height: 297mm; display: flex; flex-direction: column; }
+  .cover-rule { width: 34mm; height: 3px; background: #6bc8bd; border-radius: 4px; }
+  .cover-kicker { margin-top: 7mm; color: #86d8cf; font-size: 9pt; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+  .cover h1 { margin: 22mm 0 4mm; color: #ffffff; font-size: 33pt; line-height: 1.08; letter-spacing: -1.1px; max-width: 155mm; }
+  .cover .subtitle { max-width: 145mm; color: #c9d9dc; font-size: 14pt; line-height: 1.55; }
+  .cover-grid { margin-top: 25mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; max-width: 150mm; }
+  .cover-card { padding: 5mm; border: 1px solid rgba(255,255,255,.18); border-radius: 4mm; background: rgba(255,255,255,.06); }
+  .cover-card strong { display: block; font-size: 12pt; margin-bottom: 1mm; }
+  .cover-card span { color: #c6d6d9; font-size: 9pt; }
+  .cover-meta { margin-top: auto; padding-top: 8mm; border-top: 1px solid rgba(255,255,255,.16); display: flex; justify-content: space-between; color: #bcd0d3; }
+
+  .folio { position: absolute; left: 14mm; right: 14mm; bottom: 7mm; padding-top: 2mm; border-top: 1px solid var(--line); display: flex; justify-content: space-between; color: #819096; font-size: 8pt; }
+  .section-kicker { color: var(--brand); font-size: 8.5pt; font-weight: 750; letter-spacing: 1.1px; text-transform: uppercase; margin-bottom: 2mm; }
+  h1, h2, h3, h4 { color: var(--ink); break-after: avoid; }
+  h2 { font-size: 22pt; line-height: 1.16; margin: 0 0 6mm; letter-spacing: -.45px; }
+  h3 { font-size: 13.2pt; margin: 6mm 0 2.5mm; }
+  h4 { font-size: 10.4pt; margin: 4mm 0 1.5mm; }
+  p { margin: 0 0 3.2mm; }
+  .lead { font-size: 12pt; line-height: 1.58; color: #40535c; margin-bottom: 6mm; }
+  .small { font-size: 8.6pt; color: var(--muted); }
+  .muted { color: var(--muted); }
+  .nowrap { white-space: nowrap; }
+
+  ul, ol { margin: 2mm 0 4mm 5mm; padding-left: 4mm; }
+  li { margin: 1.3mm 0; padding-left: 1mm; }
+  li::marker { color: var(--brand); }
+
+  .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 7mm; margin-top: 8mm; }
+  .toc-item { display: grid; grid-template-columns: 10mm 1fr; gap: 3mm; align-items: start; padding: 3.5mm; background: var(--soft); border-radius: 3mm; border: 1px solid #e2e9ea; }
+  .toc-num { width: 9mm; height: 9mm; display: grid; place-items: center; background: var(--brand-dark); color: white; border-radius: 50%; font-weight: 700; }
+  .toc-item strong { display: block; margin-bottom: .5mm; }
+  .toc-item span { color: var(--muted); font-size: 8.7pt; }
+
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3.5mm; margin: 4mm 0; }
+  .cards.three { grid-template-columns: repeat(3, 1fr); }
+  .card { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm; background: white; break-inside: avoid; }
+  .card.soft { background: var(--soft); }
+  .card h3, .card h4 { margin-top: 0; }
+  .metric { font-size: 20pt; line-height: 1.1; font-weight: 750; color: var(--brand-dark); margin: 1mm 0; }
+  .metric.good { color: var(--green); }
+
+  .callout { margin: 4mm 0; padding: 4mm 5mm; border-left: 4px solid var(--brand); background: #edf6f5; border-radius: 0 3mm 3mm 0; break-inside: avoid; }
+  .callout.warning { border-color: var(--amber); background: #fff5e9; }
+  .callout.risk { border-color: var(--red); background: #faeeee; }
+  .callout strong { display: block; margin-bottom: 1mm; }
+
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 8.8pt; break-inside: auto; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  th { background: var(--brand-dark); color: white; text-align: left; font-weight: 650; }
+  th, td { padding: 2.4mm 2.6mm; border: 1px solid var(--line); vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #f7f9f9; }
+  td strong { color: var(--ink); }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 5mm 0; position: relative; }
+  .flow-box { min-height: 31mm; padding: 4mm; border: 1px solid #b9cbcd; border-radius: 3mm; background: var(--soft); position: relative; break-inside: avoid; }
+  .flow-box:not(:last-child)::after { content: "›"; position: absolute; right: -2.8mm; top: 10mm; color: var(--brand); font-size: 22pt; font-weight: 300; z-index: 3; }
+  .flow-box b { display: block; color: var(--brand-dark); margin-bottom: 1.5mm; }
+  .flow-box span { color: var(--muted); font-size: 8.3pt; }
+
+  .pipeline { margin: 4mm 0; display: grid; grid-template-columns: 12mm 1fr; gap: 2.5mm 4mm; }
+  .step-num { width: 10mm; height: 10mm; display: grid; place-items: center; border-radius: 3mm; background: var(--brand); color: white; font-weight: 700; }
+  .step-copy { padding: 1mm 0 3mm; border-bottom: 1px solid var(--line); }
+  .step-copy strong { display: block; margin-bottom: .7mm; }
+
+  .dag { display: grid; grid-template-columns: 31mm 13mm 31mm 13mm 31mm 13mm 31mm; align-items: center; justify-content: center; gap: 1mm; margin: 7mm auto; }
+  .dag .node { text-align: center; padding: 4mm 2mm; background: var(--soft); border: 1px solid #b8c8cb; border-radius: 3mm; font-weight: 650; }
+  .dag .arrow { text-align: center; color: var(--brand); font-size: 19pt; }
+  .fork { display: flex; flex-direction: column; gap: 2mm; }
+  .fork .node { padding: 2.5mm 1mm; }
+
+  pre, code { font-family: Consolas, "Courier New", monospace; }
+  code { color: #244957; background: #edf2f3; border-radius: 1mm; padding: .2mm 1mm; }
+  pre { margin: 3mm 0 5mm; padding: 4mm; border-radius: 3mm; background: #142a33; color: #eaf3f4; font-size: 8.7pt; line-height: 1.55; white-space: pre-wrap; break-inside: avoid; }
+
+  .status { display: inline-block; padding: .6mm 2mm; border-radius: 99px; font-size: 7.5pt; font-weight: 700; letter-spacing: .2px; }
+  .status.ok { background: #e8f2e6; color: var(--green); }
+  .status.limit { background: #fff0df; color: var(--amber); }
+  .status.no { background: #f8e8e8; color: var(--red); }
+
+  .formula { padding: 5mm; background: var(--brand-dark); color: white; border-radius: 3mm; font: 10pt/1.75 Consolas, monospace; margin: 4mm 0; }
+  .formula b { color: #8de0d6; }
+
+  .figure { margin: 5mm 0; border: 1px solid var(--line); border-radius: 3mm; padding: 3mm; background: #fbfcfc; break-inside: avoid; }
+  .figure img { display: block; max-width: 100%; max-height: 96mm; margin: 0 auto; object-fit: contain; }
+  .caption { padding: 2mm 1mm 0; font-size: 8pt; color: var(--muted); }
+
+  .matrix { font-size: 8pt; }
+  .matrix td:first-child { font-weight: 650; width: 31mm; }
+  .priority-list { counter-reset: item; list-style: none; padding: 0; margin-left: 0; }
+  .priority-list li { position: relative; padding: 3mm 3mm 3mm 13mm; margin: 2mm 0; background: var(--soft); border-radius: 2.5mm; }
+  .priority-list li::before { counter-increment: item; content: counter(item); position: absolute; left: 3mm; top: 2.4mm; width: 7mm; height: 7mm; display: grid; place-items: center; border-radius: 50%; background: var(--brand-dark); color: white; font-size: 8pt; font-weight: 700; }
+
+  .signoff { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 12mm; }
+  .sign-line { padding-top: 12mm; border-bottom: 1px solid #8c999e; color: var(--muted); font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-inner">
+    <div class="cover-rule"></div>
+    <div class="cover-kicker">Project handoff and technical guide</div>
+    <h1>DTS ZSC Coordination Dashboard</h1>
+    <div class="subtitle">Dynamic task sequencing for zero shot human AI coordination in a simulated warehouse workflow</div>
+
+    <div class="cover-grid">
+      <div class="cover-card"><strong>Purpose</strong><span>Demonstrate adaptive task ordering and worker allocation under changing human behavior.</span></div>
+      <div class="cover-card"><strong>Current state</strong><span>Working research simulator, trained checkpoint, dashboard, evaluations, tests, and shareable archive.</span></div>
+      <div class="cover-card"><strong>Verified scope</strong><span>One to three orders and the dashboard team configurations documented in this guide.</span></div>
+      <div class="cover-card"><strong>Important boundary</strong><span>This is a research prototype, not a production warehouse control system.</span></div>
+    </div>
+
+    <div class="cover-meta">
+      <span>Prepared 12 August 2026</span>
+      <span>Version 1.0</span>
+    </div>
+  </div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">Document map</div>
+  <h2>What this guide covers</h2>
+  <p class="lead">This document explains the complete project, the work delivered during the latest revision, how a simulation step is processed, how to operate and share the system, when it can fail, and which capabilities still require future engineering.</p>
+
+  <div class="toc">
+    <div class="toc-item"><div class="toc-num">1</div><div><strong>Executive overview</strong><span>Purpose, audience, scope, and current status.</span></div></div>
+    <div class="toc-item"><div class="toc-num">2</div><div><strong>Delivered capabilities</strong><span>Dashboard, policies, observer, metrics, and reliability work.</span></div></div>
+    <div class="toc-item"><div class="toc-num">3</div><div><strong>System architecture</strong><span>Components, data flow, and API boundaries.</span></div></div>
+    <div class="toc-item"><div class="toc-num">4</div><div><strong>Coordination logic</strong><span>Orders, dependencies, priorities, workers, and actions.</span></div></div>
+    <div class="toc-item"><div class="toc-num">5</div><div><strong>Human Observer</strong><span>Behavior signals and enhanced policy input.</span></div></div>
+    <div class="toc-item"><div class="toc-num">6</div><div><strong>Dashboard operation</strong><span>Controls, panels, interpretation, and typical workflow.</span></div></div>
+    <div class="toc-item"><div class="toc-num">7</div><div><strong>Evidence and testing</strong><span>Saved evaluation results and automated verification.</span></div></div>
+    <div class="toc-item"><div class="toc-num">8</div><div><strong>Installation and sharing</strong><span>Setup, startup, shutdown, and archive contents.</span></div></div>
+    <div class="toc-item"><div class="toc-num">9</div><div><strong>Failure guide</strong><span>Symptoms, causes, and recovery actions.</span></div></div>
+    <div class="toc-item"><div class="toc-num">10</div><div><strong>Current limitations</strong><span>What is intentionally outside the implemented scope.</span></div></div>
+    <div class="toc-item"><div class="toc-num">11</div><div><strong>Recommended roadmap</strong><span>Practical path from prototype to production.</span></div></div>
+    <div class="toc-item"><div class="toc-num">12</div><div><strong>Technical reference</strong><span>Files, endpoints, metrics, and handoff checklist.</span></div></div>
+  </div>
+
+  <div class="callout warning" style="margin-top: 9mm;">
+    <strong>How to read performance claims</strong>
+    Live dashboard runs illustrate behavior. Research cards use saved evaluation artifacts. Neither should be interpreted as evidence of real warehouse safety, productivity, or employee performance without a separate real world validation program.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Contents</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">1. Executive overview</div>
+  <h2>A research simulator for adaptive coordination</h2>
+  <p class="lead">The project studies how an AI coordinator can choose the next warehouse task and assign it to an AI or simulated human partner while orders arrive, priorities differ, deadlines tighten, and human behavior changes.</p>
+
+  <div class="cards three">
+    <div class="card soft"><div class="metric">6</div><strong>Tasks per order</strong><p class="small">Pick item and fetch box, followed by packing, labeling, weighing, and dispatch.</p></div>
+    <div class="card soft"><div class="metric">10</div><strong>Human profiles</strong><p class="small">Five training profiles and five completely held out evaluation profiles.</p></div>
+    <div class="card soft"><div class="metric">4</div><strong>Policy choices</strong><p class="small">PPO, Greedy, Static, and Random coordinators.</p></div>
+    <div class="card soft"><div class="metric">6</div><strong>Priority presets</strong><p class="small">Random, urgent, medium, routine, urgent first, and urgent later.</p></div>
+    <div class="card soft"><div class="metric">41</div><strong>Automated tests</strong><p class="small">Environment, model, statistics, dashboard, and scenario coverage.</p></div>
+    <div class="card soft"><div class="metric">3</div><strong>Dashboard workloads</strong><p class="small">One, two, or three concurrent orders.</p></div>
+  </div>
+
+  <h3>Primary users</h3>
+  <table>
+    <thead><tr><th>User</th><th>What the system provides</th><th>What it does not provide</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Researcher</strong></td><td>Repeatable simulated episodes, baselines, partner splits, metrics, ablations, and saved charts.</td><td>Evidence about real workers or physical warehouses.</td></tr>
+      <tr><td><strong>Reviewer or client</strong></td><td>A live visual explanation of priorities, task dependencies, allocation, and policy behavior.</td><td>A production service level agreement or safety certification.</td></tr>
+      <tr><td><strong>Developer</strong></td><td>Modular Python environment, policy implementations, Flask API, tests, checkpoints, and result files.</td><td>A deployment platform, database, authentication layer, or hardware adapter.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Current delivery status</strong>
+    The source project runs locally, the dashboard responds on port 5000, the complete test suite passes, and a Windows compatible share archive has been created and extraction tested.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Executive overview</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">2. Delivered capabilities</div>
+  <h2>What has been built and improved</h2>
+
+  <table>
+    <thead><tr><th>Capability</th><th>Delivered behavior</th><th>Where it appears</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Order priority control</strong></td><td>Six selectable priority scenarios. Every order displays a numeric priority, urgency class, deadline, slack, and priority rank.</td><td>Header controls and order cards</td></tr>
+      <tr><td><strong>Continuous flow</strong></td><td>Workers continue progressing on active tasks during wait steps. Three order scenarios receive a 90 step budget.</td><td>Environment and progress panels</td></tr>
+      <tr><td><strong>Human Observer output</strong></td><td>The five exact observer features sent to the coordinator are visible for every human.</td><td>Human Observer panel</td></tr>
+      <tr><td><strong>AI performance</strong></td><td>AI utilization, progress, tasks completed, steps per task, throughput, completed work share, and idle time are reported.</td><td>AI worker cards</td></tr>
+      <tr><td><strong>Sequencing basis</strong></td><td>Active work, ready candidates, priority, slack, difficulty, and dependency value are displayed with a policy specific explanation.</td><td>Step sequencing panel</td></tr>
+      <tr><td><strong>Decision explanations</strong></td><td>Each decision records source, operational reason, role logic, and observed human signal.</td><td>Coordinator explanation panel</td></tr>
+      <tr><td><strong>Policy safety</strong></td><td>Illegal assignments are blocked by a canonical action mask. Reassignment cost reflects discarded progress.</td><td>Environment and metrics</td></tr>
+      <tr><td><strong>PPO compatibility handling</strong></td><td>If the selected scenario does not match the trained PPO dimensions, a visible Greedy fallback is used. An untrained model is never shown as PPO.</td><td>Notice and status bar</td></tr>
+      <tr><td><strong>Random baseline correction</strong></td><td>Random selection chooses among fresh ready assignments and no longer destroys active progress through repeated takeovers.</td><td>Random policy</td></tr>
+      <tr><td><strong>Reliable playback</strong></td><td>Step and Run calls cannot overlap, stale reset responses are ignored, and API failures are shown clearly.</td><td>Dashboard controls</td></tr>
+      <tr><td><strong>Professional presentation</strong></td><td>Visible status text, titles, labels, and metrics use consistent language and readable punctuation.</td><td>Entire dashboard</td></tr>
+      <tr><td><strong>Shareable distribution</strong></td><td>A native Windows ZIP excludes machine specific files and has passed a full extraction test.</td><td>Desktop archive</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <strong>Transparency rule</strong>
+    An operational candidate ranking is shown for inspection, but it is not presented as a reconstruction of hidden PPO logits. Fallback and continuity guard decisions are explicitly labeled.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Delivered capabilities</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">3. System architecture</div>
+  <h2>How the components work together</h2>
+
+  <div class="flow">
+    <div class="flow-box"><b>Browser dashboard</b><span>Collects scenario choices and renders controls, metrics, orders, workers, explanations, and evidence.</span></div>
+    <div class="flow-box"><b>Flask application</b><span>Validates requests, manages the active session, selects a policy, advances steps, and serializes state.</span></div>
+    <div class="flow-box"><b>Coordination core</b><span>Combines the environment, policy, Human Observer, episode tracker, reward model, and legality mask.</span></div>
+    <div class="flow-box"><b>Saved artifacts</b><span>Loads the trained checkpoint, evaluation JSON, research evidence, training logs, and plots.</span></div>
+  </div>
+
+  <h3>One simulation step</h3>
+  <div class="pipeline">
+    <div class="step-num">1</div><div class="step-copy"><strong>Read current state</strong>The coordinator receives the enhanced observation and the environment information dictionary, including the legal action mask.</div>
+    <div class="step-num">2</div><div class="step-copy"><strong>Select a legal action</strong>The policy chooses a task and worker pair or WAIT. The environment owns legality so policy and simulator cannot disagree.</div>
+    <div class="step-num">3</div><div class="step-copy"><strong>Apply the assignment</strong>A pending eligible task starts, an allowed active task may be reassigned, or current work is preserved.</div>
+    <div class="step-num">4</div><div class="step-copy"><strong>Advance every worker</strong>Human and AI workers progress simultaneously. Completed tasks unlock their dependents.</div>
+    <div class="step-num">5</div><div class="step-copy"><strong>Score the outcome</strong>The environment applies task rewards, deadline effects, parallel work bonuses, avoidable idle penalties, and reassignment cost.</div>
+    <div class="step-num">6</div><div class="step-copy"><strong>Update observer and metrics</strong>Human behavior history, episode counters, CES inputs, logs, and explanations are updated.</div>
+    <div class="step-num">7</div><div class="step-copy"><strong>Render state</strong>The API returns JSON and the browser refreshes all live panels without reloading the page.</div>
+  </div>
+
+  <h3>API surface</h3>
+  <table>
+    <thead><tr><th>Route</th><th>Method</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>GET</td><td>Returns the complete self contained dashboard.</td></tr>
+      <tr><td><code>/api/config</code></td><td>GET</td><td>Returns profiles, policies, priorities, defaults, and saved research summaries.</td></tr>
+      <tr><td><code>/api/reset</code></td><td>POST</td><td>Validates a scenario and starts a fresh in memory episode.</td></tr>
+      <tr><td><code>/api/step</code></td><td>POST</td><td>Advances one or more bounded simulation ticks.</td></tr>
+      <tr><td><code>/api/state</code></td><td>GET</td><td>Returns the current episode without advancing it.</td></tr>
+    </tbody>
+  </table>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>System architecture</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">4. Coordination logic</div>
+  <h2>Orders, dependencies, priorities, and actions</h2>
+
+  <h3>Order dependency graph</h3>
+  <div class="dag">
+    <div class="fork"><div class="node">Pick item</div><div class="node">Fetch box</div></div>
+    <div class="arrow">›</div><div class="node">Pack box</div>
+    <div class="arrow">›</div><div class="node">Label box</div>
+    <div class="arrow">›</div><div class="node">Weigh box</div>
+  </div>
+  <div style="text-align:center; margin-top:-4mm; color:var(--muted);">Weigh box then unlocks Dispatch</div>
+
+  <table>
+    <thead><tr><th>Task</th><th>Difficulty</th><th>Baseline human time</th><th>AI time</th><th>Prerequisite</th></tr></thead>
+    <tbody>
+      <tr><td>Pick item</td><td>0.3</td><td>4.0 steps</td><td>3.5 steps</td><td>None</td></tr>
+      <tr><td>Fetch box</td><td>0.4</td><td>5.0 steps</td><td>4.0 steps</td><td>None</td></tr>
+      <tr><td>Pack box</td><td>0.6</td><td>8.0 steps</td><td>5.5 steps</td><td>Pick item, Fetch box</td></tr>
+      <tr><td>Label box</td><td>0.2</td><td>2.0 steps</td><td>2.0 steps</td><td>Pack box</td></tr>
+      <tr><td>Weigh box</td><td>0.2</td><td>2.0 steps</td><td>1.5 steps</td><td>Label box</td></tr>
+      <tr><td>Dispatch</td><td>0.3</td><td>3.0 steps</td><td>2.5 steps</td><td>Weigh box</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Priority and deadline behavior</h3>
+  <p>Order priority ranges from 0.20 to 1.00. Higher priority produces a tighter deadline. Orders arrive five steps apart, so the coordinator may need to switch attention when later work becomes urgent.</p>
+  <table>
+    <thead><tr><th>Preset</th><th>Values</th><th>Intended demonstration</th></tr></thead>
+    <tbody>
+      <tr><td>Random</td><td>Sampled from 0.20 to 1.00</td><td>Natural scenario variation</td></tr>
+      <tr><td>All urgent</td><td>0.95</td><td>Tight deadline pressure</td></tr>
+      <tr><td>All medium</td><td>0.55</td><td>Balanced pressure</td></tr>
+      <tr><td>All routine</td><td>0.20</td><td>Generous slack</td></tr>
+      <tr><td>Urgent first</td><td>0.95, 0.20</td><td>Front loaded urgency</td></tr>
+      <tr><td>Urgent later</td><td>0.20, 0.95</td><td>Priority shift after a later arrival</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Why the dashboard can appear quiet after step two</strong>
+    Pick item and Fetch box may already be active. The ready queue is then empty because packing requires both to finish. WAIT is correct in that state, and active worker progress continues on every tick.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Coordination logic</span></div>
+</section>
+
+<section class="page dense">
+  <div class="section-kicker">4. Coordination logic continued</div>
+  <h2>State, actions, reward, and policy choices</h2>
+
+  <h3>Observation and action dimensions</h3>
+  <table>
+    <thead><tr><th>Block</th><th>Features</th><th>Examples</th></tr></thead>
+    <tbody>
+      <tr><td>Each task</td><td>6</td><td>Status, difficulty, assignee, order priority, deadline slack, arrival state</td></tr>
+      <tr><td>Each worker</td><td>6</td><td>Busy, waiting, progress, observed speed, observed error rate, fatigue</td></tr>
+      <tr><td>Global state</td><td>3</td><td>Elapsed time, task completion fraction, order completion fraction</td></tr>
+      <tr><td>Each human observer</td><td>5</td><td>Smoothed behavior and completion features</td></tr>
+    </tbody>
+  </table>
+  <p>For the trained default scenario with two orders, one AI, and one human, the policy receives 92 inputs and selects from 25 actions. There are 24 task and worker assignments plus WAIT.</p>
+
+  <h3>Reward design</h3>
+  <table>
+    <thead><tr><th>Event</th><th>Effect</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Every step</td><td>Minus 0.02</td><td>Encourages timely completion.</td></tr>
+      <tr><td>Task completion</td><td>10 times difficulty</td><td>Rewards useful progress.</td></tr>
+      <tr><td>Order on time</td><td>20 times 1 plus priority</td><td>Values urgent deliveries more highly.</td></tr>
+      <tr><td>Order late</td><td>8</td><td>Retains value while reducing the completion bonus.</td></tr>
+      <tr><td>Past deadline</td><td>Minus 0.25 times priority per step</td><td>Applies continuing lateness pressure.</td></tr>
+      <tr><td>Avoidably idle worker</td><td>Minus 0.30 per worker per step</td><td>Encourages use of available capacity only when eligible work exists.</td></tr>
+      <tr><td>Parallel work</td><td>Plus 0.40 per extra busy worker</td><td>Rewards synchronized progress.</td></tr>
+      <tr><td>Illegal action</td><td>Minus 1.0</td><td>Protects valid workflow state.</td></tr>
+      <tr><td>Reassignment</td><td>Minus 2.0 times discarded progress</td><td>Discourages disruptive late takeovers.</td></tr>
+      <tr><td>All orders complete</td><td>Plus 25</td><td>Rewards solving the complete episode.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Policy behavior</h3>
+  <table>
+    <thead><tr><th>Policy</th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td><strong>PPO</strong></td><td>Uses a trained neural policy with masked actions. The saved model supports the default two order, one AI, one human shape.</td></tr>
+      <tr><td><strong>Greedy</strong></td><td>Ranks ready tasks using priority, slack, and dependency value, then selects the fastest estimated free worker.</td></tr>
+      <tr><td><strong>Static</strong></td><td>Uses fixed task order and rotating worker assignment. It does not adapt to observed human behavior.</td></tr>
+      <tr><td><strong>Random</strong></td><td>Selects a random legal fresh assignment. It waits when no free worker and ready task pair exists.</td></tr>
+    </tbody>
+  </table>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>State and policies</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">5. Human Observer</div>
+  <h2>How human variability becomes policy input</h2>
+  <p class="lead">The policy is not given a profile label. It observes behavior through worker state and a rolling feature block. This keeps the held out partner test meaningful inside the simulator.</p>
+
+  <h3>Simulated behavior axes</h3>
+  <table>
+    <thead><tr><th>Axis</th><th>Effect in the simulator</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Speed</strong></td><td>Changes the time required to complete a task.</td></tr>
+      <tr><td><strong>Error rate</strong></td><td>May add redo time to the current task.</td></tr>
+      <tr><td><strong>Fatigue</strong></td><td>Accumulates during work and slows later progress.</td></tr>
+      <tr><td><strong>Response latency</strong></td><td>Creates a delay between assignment and work start.</td></tr>
+      <tr><td><strong>Speed jitter</strong></td><td>Adds task level pace variation.</td></tr>
+      <tr><td><strong>Strategy</strong></td><td>Changes relative pace on easier and harder work.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Five observer features per human</h3>
+  <table>
+    <thead><tr><th>Feature</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Smoothed speed</strong></td><td>Rolling mean of observed pace over the recent behavior window.</td></tr>
+      <tr><td><strong>Smoothed error rate</strong></td><td>Rolling mean of observed errors.</td></tr>
+      <tr><td><strong>Completion ratio</strong></td><td>Observed completions divided by observed assignments.</td></tr>
+      <tr><td><strong>Speed trend</strong></td><td>Difference between the newer and older halves of recent pace history.</td></tr>
+      <tr><td><strong>Completed workload</strong></td><td>Observed human completions divided by total tasks in the scenario.</td></tr>
+      <tr><td><strong>Dashboard transparency</strong></td><td>The exact values are displayed with sample and assignment counts.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Training and held out profiles</h3>
+  <table>
+    <thead><tr><th>Training profiles</th><th>Held out profiles</th><th>Separation rule</th></tr></thead>
+    <tbody><tr><td>average, fast, slow, expert, novice</td><td>tired, easy first, hard first, hesitant, erratic</td><td>The two sets are asserted to be disjoint in code.</td></tr></tbody>
+  </table>
+
+  <div class="callout warning">
+    <strong>Interpretation boundary</strong>
+    These profiles are programmed simulations, not psychological or occupational assessments. Observer values should not be used to evaluate real employees.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Human Observer</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">6. Dashboard operation</div>
+  <h2>How to run and interpret a live episode</h2>
+
+  <ol class="priority-list">
+    <li><strong>Select a policy.</strong> Choose PPO, Greedy, Static, or Random. A selection change resets the episode.</li>
+    <li><strong>Select a partner.</strong> Training and held out profiles are grouped and labeled.</li>
+    <li><strong>Select workload and team.</strong> Choose one to three orders and one of the available team compositions.</li>
+    <li><strong>Select order priority.</strong> Use routine, urgent, mixed, or random conditions.</li>
+    <li><strong>Inspect the initial state.</strong> Check order priorities, deadlines, ready Pick item and Fetch box tasks, workers, and the sequencing explanation.</li>
+    <li><strong>Advance the episode.</strong> Step advances one tick, Step times five advances five ticks, and Run continues until paused or complete.</li>
+    <li><strong>Interpret progress.</strong> Task nodes show ready, blocked, active, responding, or complete. Inner bars show task execution progress.</li>
+    <li><strong>Review the outcome.</strong> The completion status reports CES, reward, tasks, orders, and whether the step limit was reached.</li>
+  </ol>
+
+  <h3>Panel reference</h3>
+  <table>
+    <thead><tr><th>Panel</th><th>Question answered</th></tr></thead>
+    <tbody>
+      <tr><td>Metric cards</td><td>How much reward, coordination efficiency, progress, synchronization, and conflict has occurred?</td></tr>
+      <tr><td>Order cards</td><td>Which order is most important, what is ready, and what is blocked?</td></tr>
+      <tr><td>Worker cards</td><td>Who is active, how much progress is made, and how is each worker performing?</td></tr>
+      <tr><td>Allocation</td><td>How many assignments went to humans and AI, and how often did roles switch?</td></tr>
+      <tr><td>Human Observer</td><td>What behavior summary is supplied to the coordinator?</td></tr>
+      <tr><td>Sequencing basis</td><td>What constraints and operational ranking shape the next step?</td></tr>
+      <tr><td>Decision explanations</td><td>What was selected, from which source, and why was it operationally reasonable?</td></tr>
+      <tr><td>Event log</td><td>What assignments, completions, waits, reassignments, and terminal events occurred?</td></tr>
+      <tr><td>Research evidence</td><td>What do saved, repeated evaluations report?</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Healthy blocked state</strong>
+    An empty ready queue does not necessarily indicate a failure. If active work is shown, the environment is advancing it until a dependency becomes available.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Dashboard operation</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">7. Evidence and testing</div>
+  <h2>What the saved evaluation demonstrates</h2>
+  <p class="lead">The bundled evaluation uses 50 episodes for each of ten partner profiles. That produces 500 simulated episodes per policy in the saved comparison.</p>
+
+  <table>
+    <thead><tr><th>Policy</th><th>Overall CES</th><th>Solve rate</th><th>Interpretation</th></tr></thead>
+    <tbody>
+      <tr><td><strong>PPO</strong></td><td>0.690</td><td>99.8%</td><td>Best saved overall CES and solve rate.</td></tr>
+      <tr><td><strong>Greedy</strong></td><td>0.665</td><td>91.2%</td><td>Strong adaptive scripted baseline.</td></tr>
+      <tr><td><strong>Static</strong></td><td>0.482</td><td>76.0%</td><td>Fixed workflow comparison.</td></tr>
+      <tr><td><strong>Random</strong></td><td>0.444</td><td>56.2%</td><td>Random legal assignment comparison from the saved evaluation.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cards three">
+    <div class="card soft"><div class="metric good">0.686</div><strong>Seen partner CES</strong><p class="small">Mean PPO CES for the five training profiles.</p></div>
+    <div class="card soft"><div class="metric good">0.693</div><strong>Held out partner CES</strong><p class="small">Mean PPO CES for five profiles not used in training.</p></div>
+    <div class="card soft"><div class="metric good">99.6%</div><strong>Held out solve rate</strong><p class="small">Saved result across 250 held out profile episodes.</p></div>
+  </div>
+
+  <div class="formula"><b>CES</b> = 0.35 completion + 0.20 speed + 0.15 synchronization + 0.20 on time rate − 0.10 conflict rate</div>
+
+  <p>The separate idle analysis reports a fully idle rate of 12.49% for PPO and 18.16% for Static across the saved study, which corresponds to 31.2% lower fully idle time for PPO.</p>
+
+  <h3>Automated verification</h3>
+  <ul>
+    <li>All 41 tests pass in the project test runner.</li>
+    <li>Legality mask and environment action checks are compared across visited states.</li>
+    <li>Checkpoint save, load, configuration metadata, and dimension guards are tested.</li>
+    <li>Training and held out partner separation is tested.</li>
+    <li>Observer ablation and blind partner behavior are tested.</li>
+    <li>Dashboard API payloads, visible panels, invalid inputs, and selector combinations are tested.</li>
+    <li>Every exposed baseline, workload, and team combination completes in the dashboard matrix test.</li>
+  </ul>
+
+  <div class="callout warning">
+    <strong>Evidence caveat</strong>
+    The dashboard research cards describe stored evaluation results. Changing the live selector does not recompute those research statistics.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Evidence and testing</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">8. Installation and sharing</div>
+  <h2>How to install, run, stop, and share</h2>
+
+  <h3>Windows setup from the shared ZIP</h3>
+  <pre>1. Extract human_rl_july_share.zip
+2. Open PowerShell in the extracted human_rl_july folder
+3. python -m venv .venv
+4. .\.venv\Scripts\Activate.ps1
+5. pip install -r requirements.txt
+6. python app.py
+7. Open http://127.0.0.1:5000</pre>
+
+  <h3>macOS or Linux setup</h3>
+  <pre>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py</pre>
+
+  <h3>System requirements</h3>
+  <table>
+    <thead><tr><th>Requirement</th><th>Purpose</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Python</td><td>Runs the simulator, model, evaluation, and Flask server.</td><td>A modern supported Python 3 release is recommended.</td></tr>
+      <tr><td>PyTorch</td><td>Loads and executes the PPO network.</td><td>CPU operation is supported for the dashboard.</td></tr>
+      <tr><td>Gymnasium and NumPy</td><td>Environment and numerical state.</td><td>Installed from requirements.txt.</td></tr>
+      <tr><td>Flask</td><td>Local web application and API.</td><td>The bundled server is for development use.</td></tr>
+      <tr><td>Pandas and Matplotlib</td><td>Evaluation analysis and saved plots.</td><td>Not required for every live dashboard action, but included in project dependencies.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Share archive</h3>
+  <p>The validated archive is named <code>human_rl_july_share.zip</code>. It includes source, tests, documentation, trained checkpoints, ablation checkpoints, logs, results, and images. It excludes the local virtual environment, Git history, Python caches, and server logs.</p>
+
+  <div class="callout">
+    <strong>Extraction validation</strong>
+    The corrected archive was created with the native Windows ZIP writer and successfully extracted with Windows Expand Archive. Required files were checked after extraction.
+  </div>
+
+  <h3>Stopping the server</h3>
+  <p>If the server is running in a visible terminal, press Ctrl C. If it was started in the background, stop the Python process listening on port 5000 before starting another copy.</p>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Installation and sharing</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">9. Failure guide</div>
+  <h2>When the project can break and how to recover</h2>
+
+  <table class="matrix">
+    <thead><tr><th>Symptom</th><th>Likely cause</th><th>Recovery</th></tr></thead>
+    <tbody>
+      <tr><td>Browser cannot connect</td><td>The Flask server is not running, crashed, or started in a different folder.</td><td>Activate the environment, run <code>python app.py</code>, and confirm port 5000.</td></tr>
+      <tr><td>Port 5000 is already in use</td><td>A previous server instance or another application owns the port.</td><td>Stop the existing listener or change the Flask port in <code>app.py</code>.</td></tr>
+      <tr><td>Import error at startup</td><td>Dependencies were not installed in the active Python environment.</td><td>Run <code>pip install -r requirements.txt</code> and verify the active interpreter.</td></tr>
+      <tr><td>PPO fallback notice</td><td>The selected order or team shape does not match the trained checkpoint, or the checkpoint is missing.</td><td>This is controlled behavior. Use two orders with one AI and one human for PPO, or retrain for the desired shape.</td></tr>
+      <tr><td>Research cards unavailable</td><td><code>evaluation.json</code> or <code>research_evidence.json</code> is missing, malformed, or incompatible.</td><td>Restore the bundled result files or rerun evaluation. Live simulation can still operate.</td></tr>
+      <tr><td>No ready tasks after early steps</td><td>Pick item and Fetch box are both active and later work is dependency blocked.</td><td>Inspect active worker progress and continue stepping. This is usually expected.</td></tr>
+      <tr><td>Step limit reached</td><td>A slow or erratic partner, static ordering, errors, or high workload consumed the available ticks.</td><td>Review the event log and worker performance. Reset with another policy or scenario.</td></tr>
+      <tr><td>Dashboard displays old wording</td><td>The browser cached an earlier page.</td><td>Use Ctrl F5 or clear the site cache.</td></tr>
+      <tr><td>ZIP does not extract</td><td>An obsolete archive created with the earlier packaging method was used.</td><td>Use the corrected 29.1 MB native Windows ZIP with the validated hash.</td></tr>
+      <tr><td>One user's reset changes another view</td><td>The server has a single process global session.</td><td>Use one user at a time or implement isolated persistent sessions.</td></tr>
+      <tr><td>State disappears after restart</td><td>Episode state is stored only in memory.</td><td>Expected behavior. Add a database or serialized session store for persistence.</td></tr>
+      <tr><td>Model load is slow</td><td>PyTorch initialization and checkpoint loading can take several seconds on first use.</td><td>Wait for the request to finish and avoid repeated reset clicks.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout risk">
+    <strong>Do not expose the bundled Flask server directly to the internet</strong>
+    It has no authentication, tenant isolation, rate limiting, production process manager, transport security configuration, or hardened deployment settings.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Failure guide</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">10. Current limitations</div>
+  <h2>What is not possible in the current version</h2>
+  <p class="lead">The items below are not impossible in principle. They are simply not implemented or validated in the current prototype.</p>
+
+  <table>
+    <thead><tr><th>Capability</th><th>Current status</th><th>What would be required</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Production deployment</strong></td><td><span class="status no">Not implemented</span><br>No hardened server, authentication, database, monitoring, or operational support model.</td><td>Production WSGI service, reverse proxy, TLS, secrets, access control, logging, monitoring, backups, and deployment automation.</td></tr>
+      <tr><td><strong>Independent multiuser sessions</strong></td><td><span class="status no">Not implemented</span><br>All users share one in memory episode.</td><td>Session identifiers, persistent state, concurrency control, and tenant isolation.</td></tr>
+      <tr><td><strong>PPO for arbitrary team and workload shapes</strong></td><td><span class="status limit">Limited</span><br>The saved PPO checkpoint supports two orders, one AI, and one human.</td><td>Separate checkpoints per shape or a variable size architecture followed by retraining and evaluation.</td></tr>
+      <tr><td><strong>Real warehouse control</strong></td><td><span class="status no">Not implemented</span><br>No connection to robots, scanners, warehouse systems, sensors, or safety controllers.</td><td>Hardware adapters, event ingestion, command protocols, safety interlocks, simulation to reality validation, and operational certification.</td></tr>
+      <tr><td><strong>Real human behavior inference</strong></td><td><span class="status no">Not validated</span><br>All people are simulated profiles.</td><td>Ethically approved data collection, privacy controls, bias assessment, consent, calibration, and field studies.</td></tr>
+      <tr><td><strong>Guaranteed optimal schedule</strong></td><td><span class="status no">Not guaranteed</span><br>PPO and heuristics choose actions but do not prove global optimality.</td><td>An exact optimization formulation, bounded problem size, solver integration, and optimality analysis.</td></tr>
+      <tr><td><strong>Causal AI explanations</strong></td><td><span class="status limit">Limited</span><br>Current explanations summarize observable inputs and operational logic.</td><td>Validated attribution methods, counterfactual tests, and explanation quality studies.</td></tr>
+      <tr><td><strong>Live training in the dashboard</strong></td><td><span class="status no">Not implemented</span><br>The UI loads a saved checkpoint.</td><td>Job management, progress streaming, resource limits, checkpoint registry, cancellation, and result tracking.</td></tr>
+      <tr><td><strong>Persistent audit history</strong></td><td><span class="status no">Not implemented</span><br>Only the current in memory log is shown.</td><td>Database schema, immutable event records, export, retention, and privacy policy.</td></tr>
+      <tr><td><strong>Real world performance claims</strong></td><td><span class="status no">Not supported</span><br>Evidence is entirely simulated.</td><td>Pilot deployment, controlled comparison, safety review, statistical plan, and independent validation.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <strong>Most important limitation</strong>
+    The system demonstrates a coordination method in a controlled simulator. It must not make autonomous decisions about real workers or equipment without substantial new engineering, governance, and validation.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Current limitations</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">11. Recommended roadmap</div>
+  <h2>A practical path beyond the prototype</h2>
+
+  <ol class="priority-list">
+    <li><strong>Stabilize the application boundary.</strong> Move simulation state out of the global process variable, add per user sessions, structured logs, configuration files, and error monitoring.</li>
+    <li><strong>Build a production service layer.</strong> Add authentication, authorization, database persistence, a production WSGI server, deployment automation, and health checks.</li>
+    <li><strong>Generalize the learned coordinator.</strong> Choose either a checkpoint registry for supported shapes or a graph based policy that handles variable workers and orders. Retrain and reevaluate.</li>
+    <li><strong>Add reproducible experiment management.</strong> Record scenario configuration, seed, checkpoint version, code version, metrics, and artifacts for every run.</li>
+    <li><strong>Create integration contracts.</strong> Define safe inbound events and outbound recommendations before connecting any warehouse system.</li>
+    <li><strong>Run human centered validation.</strong> Evaluate usability, explanation quality, bias, workload, privacy, and appropriate human override mechanisms.</li>
+    <li><strong>Introduce shadow mode.</strong> Compare recommendations against real operations without allowing the system to control equipment or assign people.</li>
+    <li><strong>Conduct a controlled pilot.</strong> Proceed only after safety, security, legal, and statistical review.</li>
+  </ol>
+
+  <h3>Suggested priority</h3>
+  <table>
+    <thead><tr><th>Phase</th><th>Focus</th><th>Exit condition</th></tr></thead>
+    <tbody>
+      <tr><td>Phase 1</td><td>Reliability, session isolation, persistence, deployment</td><td>Multiple users can run independent reproducible episodes safely.</td></tr>
+      <tr><td>Phase 2</td><td>Variable shape policy and experiment registry</td><td>Every supported scenario has a trained, versioned, evaluated policy.</td></tr>
+      <tr><td>Phase 3</td><td>Integration simulator and shadow data</td><td>External events are ingested without controlling real operations.</td></tr>
+      <tr><td>Phase 4</td><td>Human factors, safety, security, and pilot</td><td>Formal approval and monitored pilot criteria are satisfied.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Recommended next technical milestone</strong>
+    Implement isolated persistent sessions and a checkpoint registry before adding more dashboard features. Those foundations remove the largest reliability and model compatibility constraints.
+  </div>
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Recommended roadmap</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">12. Technical reference</div>
+  <h2>Project structure and ownership map</h2>
+
+  <table class="matrix">
+    <thead><tr><th>Path</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td><code>app.py</code></td><td>Flask routes, session orchestration, dashboard HTML and CSS, explanations, serialization, fallback handling.</td></tr>
+      <tr><td><code>env/collaborative_env.py</code></td><td>Gymnasium environment, observations, legality, reward, stepping, termination, order creation.</td></tr>
+      <tr><td><code>env/task_definitions.py</code></td><td>Six task order template, dependencies, task times, priority, deadline, and slack model.</td></tr>
+      <tr><td><code>env/workers.py</code></td><td>AI worker behavior and common worker observation features.</td></tr>
+      <tr><td><code>human/simulated_human.py</code></td><td>Human behavior profiles, stochastic execution, training split, and held out split.</td></tr>
+      <tr><td><code>agent/ppo_agent.py</code></td><td>PPO network, action masking, rollout buffer, optimization, checkpoint save and load.</td></tr>
+      <tr><td><code>agent/human_observer.py</code></td><td>Rolling behavior features, enhanced observations, and visible observer snapshots.</td></tr>
+      <tr><td><code>agent/curriculum.py</code></td><td>Partner curriculum that emphasizes weak profiles while maintaining a sampling floor.</td></tr>
+      <tr><td><code>baselines.py</code></td><td>Random, Static, and Greedy coordination policies.</td></tr>
+      <tr><td><code>utils/episode.py</code></td><td>Single source of per episode counters.</td></tr>
+      <tr><td><code>utils/metrics.py</code></td><td>CES, aggregation, partner reports, and data model.</td></tr>
+      <tr><td><code>utils/stats.py</code></td><td>Bootstrap intervals and paired comparisons.</td></tr>
+      <tr><td><code>train.py</code></td><td>PPO training command line workflow.</td></tr>
+      <tr><td><code>evaluate.py</code></td><td>Evaluation across policies and partner profiles.</td></tr>
+      <tr><td><code>ablation.py</code></td><td>Ablation runs for observer, partner information, reassignment, and curriculum components.</td></tr>
+      <tr><td><code>tests/test_dts_zsc.py</code></td><td>Complete environment, model, statistics, baseline, and dashboard regression suite.</td></tr>
+      <tr><td><code>checkpoints/</code></td><td>Trained default PPO model and training log.</td></tr>
+      <tr><td><code>results/</code></td><td>Saved evaluation JSON, evidence JSON, episode data, and plots.</td></tr>
+      <tr><td><code>docs/</code></td><td>User guide, methodology documents, images, and this handoff guide.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Key commands</h3>
+  <pre>python app.py
+python tests/test_dts_zsc.py
+python evaluate.py --checkpoint checkpoints/agent_final.pt --baselines
+python train.py --total_steps 250000 --seed 42</pre>
+
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Technical reference</span></div>
+</section>
+
+<section class="page">
+  <div class="section-kicker">Handoff checklist</div>
+  <h2>Acceptance and responsible use</h2>
+
+  <h3>Delivered files</h3>
+  <table>
+    <thead><tr><th>Deliverable</th><th>Status</th><th>Location</th></tr></thead>
+    <tbody>
+      <tr><td>Working source project</td><td><span class="status ok">Verified</span></td><td>Project folder</td></tr>
+      <tr><td>Trained PPO checkpoint</td><td><span class="status ok">Included</span></td><td><code>checkpoints/agent_final.pt</code></td></tr>
+      <tr><td>Saved evaluation and plots</td><td><span class="status ok">Included</span></td><td><code>results/</code></td></tr>
+      <tr><td>Automated regression suite</td><td><span class="status ok">41 passed</span></td><td><code>tests/test_dts_zsc.py</code></td></tr>
+      <tr><td>Interactive dashboard</td><td><span class="status ok">HTTP 200</span></td><td><code>http://127.0.0.1:5000</code></td></tr>
+      <tr><td>Windows compatible share archive</td><td><span class="status ok">Extraction passed</span></td><td>Desktop ZIP</td></tr>
+      <tr><td>Project handoff PDF</td><td><span class="status ok">This document</span></td><td>Desktop PDF</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Responsible use checklist</h3>
+  <ul>
+    <li>Present results as simulation evidence only.</li>
+    <li>Keep live episode demonstrations separate from saved repeated evaluations.</li>
+    <li>Do not infer real employee ability, intent, health, or productivity from simulated profiles.</li>
+    <li>Do not connect the prototype to operational equipment without safety engineering and approval.</li>
+    <li>Do not expose the development server directly to untrusted networks.</li>
+    <li>Label Greedy fallback behavior whenever PPO dimensions are incompatible.</li>
+    <li>Retain code, checkpoint, configuration, and seed information with every published result.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>Final status</strong>
+    The project is ready to share as a local research demonstration. It is not ready for production deployment or real warehouse decision making.
+  </div>
+
+  <div class="signoff">
+    <div class="sign-line">Prepared by</div>
+    <div class="sign-line">Reviewed by</div>
+    <div class="sign-line">Date</div>
+    <div class="sign-line">Version or release identifier</div>
+  </div>
+
+  <div class="folio"><span>DTS ZSC Project Handoff</span><span>Acceptance checklist</span></div>
+</section>
+
+</body>
+</html>

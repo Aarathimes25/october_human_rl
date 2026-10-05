@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environment (note: do NOT ignore "env/" — that is a source package)
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Training artefacts.
+# agent_final.pt IS tracked — the dashboard loads it and it reproduces the
+# reported numbers. Intermediate snapshots are regenerable, so they are not.
+# (Applies to the specialist run under checkpoints/specialist_average/ too.)
+**/agent_[0-9]*.pt
+
+# The pre-rewrite run, kept on disk for reference but not worth versioning.
+# See PROJECT_STATUS.md for why its results were invalid.
+checkpoints/legacy_broken_run/

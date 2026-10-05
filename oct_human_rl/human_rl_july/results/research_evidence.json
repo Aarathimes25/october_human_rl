@@ -1,0 +1,6 @@
+{
+  "method": "Mean fraction of episode steps with no busy worker, evaluated with seed 42 across all ten partner profiles.",
+  "episodes_per_policy": 500,
+  "ppo_idle_rate": 0.12491342880572708,
+  "static_idle_rate": 0.18163152543861813
+}
